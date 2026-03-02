@@ -1,7 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 
-// 👉 ASLI IMPORTS (Uncommented and restored)
+// 👉 ASLI IMPORTS
 import API from './api/axios'; 
 import Landing from './pages/Landing'; 
 import Feed from './pages/feed';
@@ -9,6 +9,8 @@ import Notifications from './pages/Notifications';
 import Profile from './pages/Profile';
 import Sidebar from './components/Sidebar';
 import RightSidebar from './components/RightSidebar'; 
+import { UserProvider } from './contexts/UserContext';
+import LiveChat from './components/LiveChats'; // 👉 CHANGE 1: LiveChat import kiya
 
 /**
  * ProtectedLayout: Wraps the main app pages. 
@@ -18,7 +20,7 @@ const ProtectedLayout = ({ children, user, onLogout, isDarkMode, toggleTheme }) 
   if (!user) return <Navigate to="/" replace />;
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-[#050505] text-gray-900 dark:text-white flex justify-center overflow-x-hidden transition-colors duration-500">
+    <div className="min-h-screen bg-gray-50 dark:bg-[#050505] text-gray-900 dark:text-white flex justify-center overflow-x-hidden transition-colors duration-500 relative">
       <div className="w-full max-w-[1265px] flex justify-between">
         
         {/* Left Sidebar */}
@@ -37,6 +39,9 @@ const ProtectedLayout = ({ children, user, onLogout, isDarkMode, toggleTheme }) 
         </div>
         
       </div>
+
+      {/* 👉 CHANGE 2: Live Chat yahan add kiya (Protected Layout mein hone se har page par dikhega) */}
+      <LiveChat />
     </div>
   );
 };
@@ -134,39 +139,42 @@ function App() {
   };
 
   return (
-    <Router>
-      <Routes>
-        <Route path="/" element={
-          currentUser ? <Navigate to="/feed" replace /> : <Landing onAuthSuccess={handleAuthSuccess} />
-        } />
-        
-        <Route path="/feed" element={
-          <ProtectedLayout user={currentUser} onLogout={handleLogout} isDarkMode={isDarkMode} toggleTheme={toggleTheme}>
-            <Feed user={currentUser} />
-          </ProtectedLayout>
-        } />
-        
-        <Route path="/notifications" element={
-          <ProtectedLayout user={currentUser} onLogout={handleLogout} isDarkMode={isDarkMode} toggleTheme={toggleTheme}>
-            <Notifications user={currentUser} />
-          </ProtectedLayout>
-        } />
-        
-        <Route path="/profile" element={
-          <ProtectedLayout user={currentUser} onLogout={handleLogout} isDarkMode={isDarkMode} toggleTheme={toggleTheme}>
-            <Profile user={currentUser} />
-          </ProtectedLayout>
-        } />
+    // 👉 CHANGE 3: UserProvider yahan add kiya (LiveChat ko context ki zarurat hoti hai)
+    <UserProvider>
+      <Router>
+        <Routes>
+          <Route path="/" element={
+            currentUser ? <Navigate to="/feed" replace /> : <Landing onAuthSuccess={handleAuthSuccess} />
+          } />
+          
+          <Route path="/feed" element={
+            <ProtectedLayout user={currentUser} onLogout={handleLogout} isDarkMode={isDarkMode} toggleTheme={toggleTheme}>
+              <Feed user={currentUser} />
+            </ProtectedLayout>
+          } />
+          
+          <Route path="/notifications" element={
+            <ProtectedLayout user={currentUser} onLogout={handleLogout} isDarkMode={isDarkMode} toggleTheme={toggleTheme}>
+              <Notifications user={currentUser} />
+            </ProtectedLayout>
+          } />
+          
+          <Route path="/profile" element={
+            <ProtectedLayout user={currentUser} onLogout={handleLogout} isDarkMode={isDarkMode} toggleTheme={toggleTheme}>
+              <Profile user={currentUser} />
+            </ProtectedLayout>
+          } />
 
-        <Route path="/user/:id" element={
-          <ProtectedLayout user={currentUser} onLogout={handleLogout} isDarkMode={isDarkMode} toggleTheme={toggleTheme}>
-            <Profile user={currentUser} />
-          </ProtectedLayout>
-        } />
-        
-        <Route path="*" element={<Navigate to="/" replace />} />
-      </Routes>
-    </Router>
+          <Route path="/user/:id" element={
+            <ProtectedLayout user={currentUser} onLogout={handleLogout} isDarkMode={isDarkMode} toggleTheme={toggleTheme}>
+              <Profile user={currentUser} />
+            </ProtectedLayout>
+          } />
+          
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </Router>
+    </UserProvider>
   );
 }
 

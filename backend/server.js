@@ -3,7 +3,9 @@ const express = require('express');
 const cors = require('cors');
 const mongoose = require('mongoose');
 const cookieParser = require('cookie-parser');
-
+// 👉 NAYE IMPORTS WEBSOCKET KE LIYE
+const http = require('http'); 
+const setupWebSocket = require('./socketServer'); // 👈 Apna naya module import kiya
 
 const connectDB = require('./config/db');
 
@@ -11,6 +13,8 @@ const connectDB = require('./config/db');
 connectDB();
 
 const app = express();
+// 👉 FIX: Express app ko HTTP server mein wrap kiya
+const server = http.createServer(app); 
 
 // ==================
 // Middleware
@@ -20,11 +24,9 @@ app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
 app.use(cors({
-    // Ab humne array de diya hai, taaki Vite 5173 pe chale ya 5174 pe, dono allowed honge!
     origin: ['http://localhost:5173', 'http://localhost:5174'], 
     credentials: true
 }));
-
 
 // ==================
 // Routes
@@ -32,6 +34,8 @@ app.use(cors({
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/posts', require('./routes/postRoutes'));
+// 👉 FIX: Chat history aur messages ke liye naya route
+app.use('/api/messages', require('./routes/messageRoutes')); 
 
 // ==================
 // Root Route
@@ -41,10 +45,17 @@ app.get('/', (req, res) => {
 });
 
 // ==================
+// 🟢 WEBSOCKET SETUP (LIVE CHAT)
+// ==================
+// 👈 Saara logic ab yahan ek simple line mein aa gaya!
+setupWebSocket(server);
+
+// ==================
 // Server
 // ==================
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+// 👉 FIX: Yahan 'app.listen' ki jagah 'server.listen' use hoga!
+server.listen(PORT, () => {
+  console.log(`🚀 Server & WebSocket running on http://localhost:${PORT}`);
 });
