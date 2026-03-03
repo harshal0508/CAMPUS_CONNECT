@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 // 👉 ASLI IMPORTS
 import API from './api/axios'; 
 import Landing from './pages/Landing'; 
-import Feed from './pages/feed';
+import Feed from './pages/Feed';
 import Notifications from './pages/Notifications';
 import Profile from './pages/Profile';
 import Sidebar from './components/Sidebar';
