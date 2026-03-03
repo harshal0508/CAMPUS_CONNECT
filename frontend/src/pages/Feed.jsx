@@ -94,7 +94,7 @@ export default function Feed({ user }) {
       <div className="relative z-10 pb-24 px-3 md:px-0 max-w-2xl mx-auto mt-4">
         
         {/* ✨ CREATE POST SECTION */}
-        <div className="mb-6 bg-white dark:bg-gradient-to-b dark:from-white/[0.02] dark:to-transparent rounded-[2rem] p-1 border border-gray-200 dark:border-white/5 shadow-md dark:shadow-2xl transition-colors duration-500">
+        <div className="mb-6">
           <CreatePost 
             user={user} 
             onPostCreated={(newPost) => setPosts([newPost, ...posts])} 

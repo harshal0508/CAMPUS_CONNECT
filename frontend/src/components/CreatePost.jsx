@@ -12,12 +12,10 @@ export default function CreatePost({ onPostCreated, user }) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!text && !image) return;
-
     setLoading(true);
     const formData = new FormData();
     formData.append('text', text); 
     
-    // 👉 THE FIX: 'image' ki jagah 'media' kar diya gaya hai taaki backend se match ho sake
     if (image) formData.append('media', image);
 
     try {
@@ -36,15 +34,14 @@ export default function CreatePost({ onPostCreated, user }) {
   };
 
   return (
-    <div className="p-4 flex gap-3">
+    <div className="p-6 flex gap-4 bg-white dark:bg-gray-900 rounded-2xl border border-gray-200 dark:border-gray-700">
       <div className="w-10 h-10 bg-blue-600 rounded-full flex-shrink-0 flex items-center justify-center font-bold text-white uppercase mt-1">
         {user?.name?.[0] || 'U'}
       </div>
-
       <div className="flex-1">
         <form onSubmit={handleSubmit}>
           <textarea
-            className="w-full bg-transparent border-none text-[20px] outline-none resize-none placeholder-gray-500 text-black min-h-[50px] pt-1"
+            className="w-full bg-transparent border-none text-[20px] outline-none resize-none placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-gray-100 min-h-[50px] pt-1"
             placeholder="What's happening in Campus?"
             value={text}
             onChange={(e) => {
@@ -53,7 +50,6 @@ export default function CreatePost({ onPostCreated, user }) {
               e.target.style.height = e.target.scrollHeight + 'px';
             }}
           />
-
           {preview && (
             <div className="relative mb-3 mt-2">
               <button 
@@ -63,11 +59,10 @@ export default function CreatePost({ onPostCreated, user }) {
               >
                 <X size={18} className="text-white" />
               </button>
-              <img src={preview} alt="Preview" className="rounded-2xl w-full max-h-[500px] object-cover border border-gray-800" />
+              <img src={preview} alt="Preview" className="rounded-2xl w-full max-h-[500px] object-cover border border-gray-300 dark:border-gray-700" />
             </div>
           )}
-
-          <div className="flex justify-between items-center pt-3 mt-2 border-t border-gray-800">
+          <div className="flex justify-between items-center pt-3 mt-2 border-t border-gray-300 dark:border-gray-700">
             <div className="flex text-[#1d9bf0]">
               <button type="button" onClick={() => fileInputRef.current.click()} className="p-2 hover:bg-[#1d9bf0]/10 rounded-full transition"><Image size={20} /></button>
               <button type="button" className="p-2 hover:bg-[#1d9bf0]/10 rounded-full transition hidden sm:block"><Smile size={20} /></button>
@@ -78,7 +73,6 @@ export default function CreatePost({ onPostCreated, user }) {
                 if (file) { setImage(file); setPreview(URL.createObjectURL(file)); }
               }} className="hidden" accept="image/*" />
             </div>
-
             <button
               type="submit"
               disabled={loading || (!text && !image)}
