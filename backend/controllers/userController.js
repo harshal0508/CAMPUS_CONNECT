@@ -9,22 +9,15 @@ const updateProfile = async (req, res) => {
         const { name, handle, batch, github, skills, interests, bio } = req.body;
         const userId = req.user._id;
         
-        // Comma-separated strings ko arrays mein badle, empty aane par safe rahe
         const parsedSkills = skills ? skills.split(',').map(s => s.trim()).filter(s => s) : [];
         const parsedInterests = interests ? interests.split(',').map(i => i.trim()).filter(i => i) : [];
         
-        // Saara data ek object mein pack karein
         let updateData = {
-            name, 
-            handle, 
-            batch,
-            github,
-            bio,
+            name, handle, batch, github, bio,
             skills: parsedSkills,
             interests: parsedInterests
         };
 
-        // Handle unique check: Ensure the new handle isn't taken by someone else
         if (handle) {
             const existingUser = await User.findOne({ handle, _id: { $ne: userId } });
             if (existingUser) {
@@ -32,18 +25,15 @@ const updateProfile = async (req, res) => {
             }
         }
 
-        // ImageKit Upload: Agar nayi file aayi hai toh process karein
         if (req.file) {
             const response = await imagekit.upload({
                 file: req.file.buffer,
                 fileName: `avatar_${userId}_${Date.now()}`,
                 folder: "campus_connect_avatars"
             });
-            // Naya Image URL updateData mein jod dein
             updateData.avatar = response.url;
         }
 
-        // Database ko naye data ke saath update karein
         const updatedUser = await User.findByIdAndUpdate(
             userId,
             { $set: updateData },
@@ -65,7 +55,6 @@ const unconnectUser = async (req, res) => {
         const targetId = req.params.id; 
         const myId = req.user._id;
 
-        // Mutual removal from both users' connection lists
         await User.findByIdAndUpdate(myId, { $pull: { connections: targetId } });
         await User.findByIdAndUpdate(targetId, { $pull: { connections: myId } });
 
@@ -115,7 +104,6 @@ const getOtherUserProfile = async (req, res) => {
         res.status(200).json(user);
     } catch (error) {
         console.error("Fetch Other Profile Error:", error.message);
-        // Agar Invalid ID aati hai toh crash hone se bachaye
         if (error.kind === 'ObjectId') {
             return res.status(404).json({ message: 'User not found' });
         }
@@ -135,15 +123,10 @@ const sendConnectionRequest = async (req, res) => {
             return res.status(400).json({ message: "You cannot connect with yourself" });
         }
 
-        // Dono users ka Asli Database Document fetch karna zaroori hai
         const targetUser = await User.findById(targetUserId);
-        const currentUser = await User.findById(currentUserId); 
+        if (!targetUser) return res.status(404).json({ message: "User not found" });
 
-        if (!targetUser || !currentUser) {
-            return res.status(404).json({ message: "User not found" });
-        }
-
-        // Check if already connected or request pending
+        // Basic checks
         if (targetUser.connections.includes(currentUserId)) {
             return res.status(400).json({ message: "Already connected" });
         }
@@ -151,12 +134,9 @@ const sendConnectionRequest = async (req, res) => {
             return res.status(400).json({ message: "Request already sent" });
         }
         
-        // Target ke pendingRequests me daalo, aur Current ke sentRequests me daalo
-        targetUser.pendingRequests.push(currentUserId);
-        currentUser.sentRequests.push(targetUserId); 
-        
-        await targetUser.save();
-        await currentUser.save(); 
+        // 🔥 BIG TECH WAY: Use $addToSet (Ye kabhi duplicate nahi banne dega)
+        await User.findByIdAndUpdate(targetUserId, { $addToSet: { pendingRequests: currentUserId } });
+        await User.findByIdAndUpdate(currentUserId, { $addToSet: { sentRequests: targetUserId } });
 
         res.status(200).json({ message: "Connection request sent!" });
     } catch (error) {
@@ -173,28 +153,21 @@ const acceptConnectionRequest = async (req, res) => {
         const requesterId = req.params.id; 
         const currentUserId = req.user._id;
 
-        // Dono users ko fetch karo
         const currentUser = await User.findById(currentUserId);
-        const requesterUser = await User.findById(requesterId);
-
         if (!currentUser.pendingRequests.includes(requesterId)) {
             return res.status(400).json({ message: "No pending request" });
         }
 
-        // Move from pending to connections
-        currentUser.pendingRequests = currentUser.pendingRequests.filter(
-            (id) => id.toString() !== requesterId.toString()
-        );
-        currentUser.connections.push(requesterId);
-        await currentUser.save();
+        // 🔥 MAGIC HAPPENS HERE: Ek hi line mein request hatao aur connection banao ($pull aur $addToSet)
+        await User.findByIdAndUpdate(currentUserId, {
+            $pull: { pendingRequests: requesterId },
+            $addToSet: { connections: requesterId } // Kabhi duplicate nahi banayega!
+        });
 
-        if(requesterUser) {
-            requesterUser.sentRequests = requesterUser.sentRequests.filter(
-                (id) => id.toString() !== currentUserId.toString()
-            );
-            requesterUser.connections.push(currentUserId);
-            await requesterUser.save(); 
-        }
+        await User.findByIdAndUpdate(requesterId, {
+            $pull: { sentRequests: currentUserId },
+            $addToSet: { connections: currentUserId }
+        });
 
         res.status(200).json({ message: "Request accepted!" });
     } catch (error) {
@@ -209,29 +182,11 @@ const acceptConnectionRequest = async (req, res) => {
 const rejectConnectionRequest = async (req, res) => {
     try {
         const requesterId = req.params.id; 
-        const currentUserId = req.user._id;         
+        const currentUserId = req.user._id; 
 
-        // Dono users ko fetch karo
-        const currentUser = await User.findById(currentUserId);
-        const requesterUser = await User.findById(requesterId); 
-
-        if (!currentUser.pendingRequests.includes(requesterId)) {
-            return res.status(400).json({ message: "No pending request" });
-        }                      
-
-        // Apni list se hataya
-        currentUser.pendingRequests = currentUser.pendingRequests.filter(
-            (id) => id.toString() !== requesterId.toString()
-        );  
-        await currentUser.save();
-        
-        // Requester ki sent list se bhi hataya
-        if (requesterUser) {
-            requesterUser.sentRequests = requesterUser.sentRequests.filter(
-                (id) => id.toString() !== currentUserId.toString()
-            );
-            await requesterUser.save();
-        }
+        // 🔥 CLEANUP: Seedha database se $pull kardo, .filter() aur .save() ki zaroorat hi nahi
+        await User.findByIdAndUpdate(currentUserId, { $pull: { pendingRequests: requesterId } });
+        await User.findByIdAndUpdate(requesterId, { $pull: { sentRequests: currentUserId } });
         
         res.status(200).json({ message: "Request rejected!" });
     } catch (error) {

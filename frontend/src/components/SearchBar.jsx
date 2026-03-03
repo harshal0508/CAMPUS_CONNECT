@@ -9,7 +9,7 @@ export default function SearchBar() {
         </div>
         <input 
           type="text" 
-          placeholder="Search CampusConnect" 
+          placeholder="RIZZ search" 
           className="w-full bg-[#202327] text-white pl-12 pr-4 py-3 rounded-full outline-none focus:bg-black focus:border focus:border-[#1d9bf0] transition"
         />
       </div>

@@ -44,7 +44,7 @@ export default function CreatePost({ onPostCreated, user }) {
       <div className="flex-1">
         <form onSubmit={handleSubmit}>
           <textarea
-            className="w-full bg-transparent border-none text-[20px] outline-none resize-none placeholder-gray-500 text-white min-h-[50px] pt-1"
+            className="w-full bg-transparent border-none text-[20px] outline-none resize-none placeholder-gray-500 text-black min-h-[50px] pt-1"
             placeholder="What's happening in Campus?"
             value={text}
             onChange={(e) => {

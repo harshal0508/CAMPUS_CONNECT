@@ -73,7 +73,7 @@ export default function RightSidebar({ isDarkMode, toggleTheme }) {
 
         {/* Show More Footer */}
         <div className="p-5 hover:bg-gray-50 dark:hover:bg-white/[0.04] transition-colors duration-300 cursor-pointer rounded-b-[2rem] border-t border-gray-100 dark:border-white/5">
-          <span className="text-[#1d9bf0] font-bold text-[15px] hover:underline">Show more</span>
+          <span className="text-[#1d9bf0] font-bold text-[15px] hover:underline">zizz</span>
         </div>
       </div>
 
@@ -83,7 +83,7 @@ export default function RightSidebar({ isDarkMode, toggleTheme }) {
         <span className="hover:underline cursor-pointer">Privacy Policy</span>
         <span className="hover:underline cursor-pointer">Cookie Policy</span>
         <span className="hover:underline cursor-pointer">Accessibility</span>
-        <span>© 2026 Campus GenZ</span>
+        <span>© 2026 CampusConnect v.1 </span>
       </div>
 
     </aside>

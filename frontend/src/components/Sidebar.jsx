@@ -7,7 +7,8 @@ import { createPortal } from 'react-dom'; // 👉 Modal Trap fix ke liye
 function SidebarView({ user, onLogout, navigate, location }) {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-
+  
+  // demo to see notification
   useEffect(() => {
     const timer = setTimeout(() => {
       setUnreadCount(3); 
@@ -153,10 +154,10 @@ export default function Sidebar(props) {
     return <SidebarWithRouter {...props} />;
   }
   
-  // Fallback for Canvas/Preview
-  const mockNavigate = (path) => console.log(`[Mock Navigate]: To ${path}`);
-  const mockLocation = { pathname: '/feed' };
-  return <SidebarView {...props} navigate={mockNavigate} location={mockLocation} />;
+  // // Fallback for Canvas/Preview
+  // const mockNavigate = (path) => console.log(`[Mock Navigate]: To ${path}`);
+  // const mockLocation = { pathname: '/feed' };
+  // return <SidebarView {...props} navigate={mockNavigate} location={mockLocation} />;
 }
 
 // 🧭 Dynamic NavItem Component (Theme Aware)
