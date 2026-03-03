@@ -1,45 +1,53 @@
 const { WebSocketServer } = require('ws'); 
 
-// Ek function banate hain jo 'server' object receive karega
 const setupWebSocket = (server) => {
-  // Naya WebSocket server banaya jo humare HTTP port par chalega
   const wss = new WebSocketServer({ server });
 
-  // Kaunsa user online hai, uski socket ID track karne ke liye Map
+  // 🚀 PRO-TIP: Ab ek user ki multiple sockets (tabs/devices) store hongi Set() ke andar
   const activeUsers = new Map(); 
 
   wss.on('connection', (ws) => {
     console.log('🔗 New WebSocket Connection Established');
+    
+    // Is specific connection ka user ID track karne ke liye variable
+    let currentUserId = null;
 
-    // Jab frontend se koi message aaye
     ws.on('message', (messageAsString) => {
       try {
-        // String data ko wapas Object mein convert kiya
         const data = JSON.parse(messageAsString);
 
         // 1. SETUP: Frontend ne bataya ki "Main online aa gaya"
         if (data.type === 'setup') {
-          const userId = data.payload;
-          activeUsers.set(userId, ws);
-          console.log(`👤 User ${userId} is online`);
+          // IDs ko hamesha String mein convert karein taaki Map lookup fail na ho
+          currentUserId = String(data.payload);
+          
+          if (!activeUsers.has(currentUserId)) {
+            activeUsers.set(currentUserId, new Set()); // Naya Set banaya
+          }
+          // Is user ke Set mein current socket (tab/device) add kar do
+          activeUsers.get(currentUserId).add(ws);
+          
+          console.log(`👤 User ${currentUserId} is online (Active Tabs/Devices: ${activeUsers.get(currentUserId).size})`);
         }
 
         // 2. SEND MESSAGE: Frontend ne kisi ko message bheja
         if (data.type === 'send_message') {
           const messageData = data.payload;
-          // Check karein receiver ki ID
-          const receiverId = messageData.receiver || messageData.receiverId;
+          const receiverId = String(messageData.receiver || messageData.receiverId);
 
-          // Check karein ki kya dost currently online hai?
-          const receiverSocket = activeUsers.get(String(receiverId));
+          // Check karein ki receiver ke kitne devices/tabs online hain
+          const receiverSockets = activeUsers.get(receiverId);
           
-          // Agar dost online hai (readyState 1 = OPEN)
-          if (receiverSocket && receiverSocket.readyState === 1) { 
-            // Dost ki screen par live message push kar do
-            receiverSocket.send(JSON.stringify({
-              type: 'receive_message',
-              payload: messageData
-            }));
+          if (receiverSockets) {
+            // Dost ke har open tab/device par loop karke message push karo
+            receiverSockets.forEach(clientWs => {
+              if (clientWs.readyState === 1) { // 1 = OPEN
+                clientWs.send(JSON.stringify({
+                  type: 'receive_message',
+                  payload: messageData
+                }));
+              }
+            });
           }
         }
       } catch (error) {
@@ -49,17 +57,22 @@ const setupWebSocket = (server) => {
 
     // Jab user browser/tab close kare
     ws.on('close', () => {
-      // Us user ko active list se hata do
-      for (let [userId, socket] of activeUsers.entries()) {
-        if (socket === ws) {
-          activeUsers.delete(userId);
-          console.log(`📴 User ${userId} went offline`);
-          break;
+      if (currentUserId && activeUsers.has(currentUserId)) {
+        const userSockets = activeUsers.get(currentUserId);
+        
+        // Is tab ki socket ko list se hatao
+        userSockets.delete(ws);
+        
+        // Agar uske saare tabs band ho gaye, toh user ko completely offline mark karo
+        if (userSockets.size === 0) {
+          activeUsers.delete(currentUserId);
+          console.log(`📴 User ${currentUserId} went completely offline`);
+        } else {
+          console.log(`📉 User ${currentUserId} closed a tab (Remaining active: ${userSockets.size})`);
         }
       }
     });
   });
 };
 
-// Function ko export kiya taaki server.js mein use kar sakein
 module.exports = setupWebSocket;
