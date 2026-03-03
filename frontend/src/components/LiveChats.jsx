@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import { MessageCircle, X, Send, ArrowLeft, Loader2, Sparkles, AlertTriangle } from 'lucide-react';
 import axios from 'axios';
-// 👉 Path fix: 'context' se 'contexts' kiya gaya hai resolution error theek karne ke liye
+// 👉 Path fix: Resolution error ko theek karne ke liye path update kiya gaya hai
 import { useUser } from '../contexts/UserContext'; 
 
 const API_URL = 'http://localhost:5000/api';
@@ -13,8 +13,7 @@ const API = axios.create({
 });
 
 export default function LiveChat() {
-  // fetchFreshProfile ko destructure kiya taaki connection list hamesha sync rahe
-  const { user, fetchFreshProfile } = useUser(); 
+  const { user } = useUser(); 
   
   const [isOpen, setIsOpen] = useState(false);
   const [activeChat, setActiveChat] = useState(null);
@@ -34,7 +33,7 @@ export default function LiveChat() {
   const chatBodyRef = useRef(null);
   const prevScrollHeightRef = useRef(0);
   
-  // Preview trigger state: Jab background mein previews load hon toh list refresh ho
+  // 👉 Preview trigger state: Jab background mein previews load hon toh list refresh ho
   const [previewSync, setPreviewSync] = useState(0);
 
   const myId = useMemo(() => user?._id?.toString(), [user?._id]);
@@ -45,14 +44,12 @@ export default function LiveChat() {
     activeChatIdRef.current = activeChatId;
   }, [activeChatId]);
 
-  // Connections dependency taaki list hamesha updated rahe
   const uniqueFriends = useMemo(() => {
     if (!user || !user.connections) return [];
     const seen = new Set();
     const unique = [];
     user.connections.forEach(f => {
       if (!f) return;
-      // Object ya ID dono cases handle kiye gaye hain
       const fObj = typeof f === 'object' ? f : { _id: f, name: 'User' };
       const fIdStr = fObj._id?.toString();
       if (fIdStr && !seen.has(fIdStr)) {
@@ -61,7 +58,7 @@ export default function LiveChat() {
       }
     });
     return unique;
-  }, [user, user?.connections]);
+  }, [user]);
 
   // 1️⃣ WebSocket Engine
   const connectSocket = useCallback(() => {
@@ -90,12 +87,13 @@ export default function LiveChat() {
             setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' }), 30);
           }
 
-          // Background Sync & Last Message preview update
+          // Background Sync & Last Message update
           const friendId = (sId === myId) ? rId : sId;
           if (friendId) {
             const cached = chatCacheRef.current[friendId] || [];
             if (!cached.find(m => m._id === msg._id)) {
               chatCacheRef.current[friendId] = [...cached, msg];
+              // List refresh karne ke liye trigger
               setPreviewSync(prev => prev + 1);
             }
           }
@@ -144,16 +142,9 @@ export default function LiveChat() {
     }
   }, []);
 
-  // Sync: Jab widget khule, fresh profile mangwao
+  // Jab Chat widget khule, toh sabhi connections ke liye latest message fetch karo
   useEffect(() => {
-    if (isOpen) {
-      fetchFreshProfile();
-    }
-  }, [isOpen, fetchFreshProfile]);
-
-  // Jab widget khule, sabhi connections ke previews mangwao
-  useEffect(() => {
-    if (isOpen && !activeChatId && uniqueFriends.length > 0) {
+    if (isOpen && !activeChatId) {
       uniqueFriends.forEach(f => {
         const fId = f._id?.toString();
         if (fId && !chatCacheRef.current[fId]) {
@@ -249,7 +240,7 @@ export default function LiveChat() {
                     const lastMsg = chatCacheRef.current[fId]?.slice(-1)[0];
                     return (
                       <div key={f._id} onClick={() => setActiveChat(f)} className="flex items-center gap-4 p-4 hover:bg-gray-50 dark:hover:bg-white/[0.03] rounded-2xl cursor-pointer transition-all active:scale-[0.98]">
-                        <img src={f.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${f.name || 'U'}`} className="w-12 h-12 rounded-xl object-cover bg-gray-100" alt="" />
+                        <img src={f.avatar || `https://api.dicebear.com/7.x/avataaars/svg?seed=${f.name || 'U'}`} className="w-12 h-12 rounded-xl object-cover bg-gray-200" alt="" />
                         <div className="flex-1 text-left overflow-hidden">
                           <h4 className="font-bold dark:text-white truncate">{f.name}</h4>
                           <p className="text-[12px] text-gray-500 dark:text-gray-400 truncate font-medium">
