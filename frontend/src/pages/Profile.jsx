@@ -23,7 +23,7 @@ export default function Profile() {
   const [activeTab, setActiveTab] = useState('skills'); 
   const fileInputRef = useRef();
 
-  // 👉 Check karega ki URL mein ID hai ya nahi. Agar ID nahi hai, matlab ye aapki khud ki profile hai.
+  //  Check karega ki URL mein ID hai ya nahi. Agar ID nahi hai, matlab ye aapki khud ki profile hai.
   const isOwnProfile = !id; 
 
   const fetchProfile = useCallback(async () => {
@@ -48,7 +48,7 @@ export default function Profile() {
         });
       }
     } catch (err) {
-      console.error("Profile fetch error:", err);
+      console.error("Profile fetch error: ", err);
       // Agar dusre ki profile fetch na ho paye, toh feed par wapas bhej do
       if (!isOwnProfile) navigate('/feed');
     } finally {
@@ -81,7 +81,7 @@ export default function Profile() {
       localStorage.setItem('userInfo', JSON.stringify(storedData));
       window.dispatchEvent(new Event('profileUpdated'));
       
-      alert("Profile Optimized Successfully! 🚀");
+      alert("Profile Optimized Successfully! ");
     } catch (err) {
       console.error("Update error:", err);
       alert(err.response?.data?.message || "Optimization failed");
