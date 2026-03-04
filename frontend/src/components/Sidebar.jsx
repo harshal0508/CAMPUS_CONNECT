@@ -1,14 +1,12 @@
 import React, { useState, useEffect, useCallback } from 'react'; 
-import { Home, Bell, User, LogOut, Sparkles } from 'lucide-react';
+import { Home, Bell, User, LogOut, Sparkles, Radio, AudioLines } from 'lucide-react'; // 👉 AudioLines add kiya
 import { useNavigate, useLocation, useInRouterContext } from 'react-router-dom';
-import { createPortal } from 'react-dom'; // 👉 Modal Trap fix ke liye
+import { createPortal } from 'react-dom'; 
 
-// 👉 Main UI Component: Pure GenZ, Colorful & Theme Responsive
 function SidebarView({ user, onLogout, navigate, location }) {
   const [showLogoutModal, setShowLogoutModal] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   
-  // demo to see notification
   useEffect(() => {
     const timer = setTimeout(() => {
       setUnreadCount(3); 
@@ -25,18 +23,16 @@ function SidebarView({ user, onLogout, navigate, location }) {
 
   return (
     <>
-      {/* 👉 THEME UPGRADE: bg-white dark:bg-[#050505] */}
       <aside className="w-[80px] xl:w-[280px] sticky top-0 z-[50] h-screen flex flex-col justify-between py-4 px-2 xl:px-4 border-r border-gray-200 dark:border-white/5 bg-white/90 dark:bg-[#050505]/95 backdrop-blur-2xl select-none transition-colors duration-500">
         
         <div className="flex flex-col items-center xl:items-start w-full">
           
-          {/* 🚀 Animated Logo Section */}
+          {/* Animated Logo Section */}
           <div 
             onClick={() => navigate('/feed')} 
             className="relative p-1 mb-6 xl:ml-2 rounded-full cursor-pointer group transition-all duration-300 active:scale-90"
           >
             <div className="absolute inset-0 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-full blur-md opacity-40 group-hover:opacity-80 transition-opacity duration-300"></div>
-            {/* Theme responsive logo box */}
             <div className="relative bg-white dark:bg-black p-2 rounded-full border border-gray-200 dark:border-white/10 transition-colors duration-500">
               <img src="/logo.png" alt="Logo" className="w-9 h-9 object-contain group-hover:rotate-12 transition-transform duration-300" />
             </div>
@@ -50,6 +46,38 @@ function SidebarView({ user, onLogout, navigate, location }) {
               active={location.pathname === '/feed'} 
               onClick={() => navigate('/feed')} 
             />
+
+            {/* 👉 IMPROVED UI: Campus Voice (Voice Rooms) Button */}
+            <div 
+              onClick={() => navigate('/rooms')} 
+              className={`flex items-center gap-4 p-3.5 rounded-2xl cursor-pointer transition-all duration-300 w-full active:scale-95 group relative overflow-hidden
+                ${location.pathname === '/rooms' 
+                  ? 'bg-gradient-to-r from-green-500 to-emerald-600 shadow-[0_0_20px_rgba(16,185,129,0.3)] text-white' 
+                  : 'text-gray-500 dark:text-gray-400 hover:bg-green-50 dark:hover:bg-green-500/10 hover:text-green-600 dark:hover:text-green-400 hover:translate-x-1 border border-transparent hover:border-green-200 dark:hover:border-green-500/20'}`}
+            >
+              {/* Subtle background pulse animation for unselected state */}
+              {location.pathname !== '/rooms' && (
+                 <div className="absolute inset-0 bg-gradient-to-r from-green-400/0 via-green-400/5 to-green-400/0 translate-x-[-100%] group-hover:animate-[shimmer_1.5s_infinite]"></div>
+              )}
+              
+              <div className="relative flex justify-center xl:justify-start">
+                <div className={`relative z-10 ${location.pathname === '/rooms' ? 'scale-110' : 'group-hover:scale-110 transition-transform duration-300'}`}>
+                  {location.pathname === '/rooms' ? <AudioLines size={24} className="animate-pulse" /> : <Radio size={24} />}
+                </div>
+                {/* Live indicator dot */}
+                <div className={`absolute top-0 right-0 w-2 h-2 rounded-full ${location.pathname === '/rooms' ? 'bg-white' : 'bg-green-500'} animate-ping`}></div>
+              </div>
+              <span className="hidden xl:inline text-[17px] tracking-wide relative z-10">Campus Voice</span>
+              
+              {/* Extra visual element for active state */}
+              {location.pathname === '/rooms' && (
+                <div className="hidden xl:flex ml-auto items-center gap-1 opacity-80">
+                  <div className="w-1 h-3 bg-white rounded-full animate-[bounce_1s_infinite_100ms]"></div>
+                  <div className="w-1 h-4 bg-white rounded-full animate-[bounce_1s_infinite_200ms]"></div>
+                  <div className="w-1 h-2 bg-white rounded-full animate-[bounce_1s_infinite_300ms]"></div>
+                </div>
+              )}
+            </div>
 
             <div 
               onClick={() => navigate('/notifications')} 
@@ -105,7 +133,6 @@ function SidebarView({ user, onLogout, navigate, location }) {
         <div className="fixed inset-0 z-[99999] flex items-center justify-center bg-black/60 backdrop-blur-md p-4 animate-in fade-in duration-300">
           <div className="bg-white dark:bg-[#0a0a0a] border border-gray-200 dark:border-white/10 rounded-[2.5rem] p-8 max-w-[340px] w-full animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 shadow-2xl dark:shadow-[0_0_50px_rgba(0,0,0,0.5)] relative overflow-hidden transition-colors duration-500">
             
-            {/* Background Glow */}
             <div className="absolute -top-20 -right-20 w-40 h-40 bg-red-500/20 blur-[50px] rounded-full"></div>
             
             <div className="flex flex-col items-center text-center relative z-10">
@@ -140,7 +167,6 @@ function SidebarView({ user, onLogout, navigate, location }) {
   );
 }
 
-// 👉 Safe Wrapper for Router Context
 function SidebarWithRouter(props) {
   const navigate = useNavigate();
   const location = useLocation();
@@ -154,13 +180,11 @@ export default function Sidebar(props) {
     return <SidebarWithRouter {...props} />;
   }
   
-  // // Fallback for Canvas/Preview
-  // const mockNavigate = (path) => console.log(`[Mock Navigate]: To ${path}`);
-  // const mockLocation = { pathname: '/feed' };
-  // return <SidebarView {...props} navigate={mockNavigate} location={mockLocation} />;
+  const mockNavigate = (path) => console.log(`[Mock Navigate]: To ${path}`);
+  const mockLocation = { pathname: '/feed' };
+  return <SidebarView {...props} navigate={mockNavigate} location={mockLocation} />;
 }
 
-// 🧭 Dynamic NavItem Component (Theme Aware)
 function NavItem({ icon, label, active, onClick }) {
   return (
     <div 
