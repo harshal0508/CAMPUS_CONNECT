@@ -2,7 +2,7 @@ const User = require('../models/User');
 const imagekit = require("../config/imagekit"); 
 
 // ==========================================
-// 1. UPDATE USER PROFILE (Name, Handle, Avatar, Skills, etc.)
+// 1. UPDATE USER PROFILE (Fixed for 3D Upload)
 // ==========================================
 const updateProfile = async (req, res) => {
     try {
@@ -25,13 +25,27 @@ const updateProfile = async (req, res) => {
             }
         }
 
-        if (req.file) {
-            const response = await imagekit.upload({
-                file: req.file.buffer,
-                fileName: `avatar_${userId}_${Date.now()}`,
-                folder: "campus_connect_avatars"
-            });
-            updateData.avatar = response.url;
+        // 👉 THE FIX: req.file ki jagah req.files use hoga kyunki multer ab .fields() use kar raha hai
+        if (req.files) {
+            // 1. Handle 2D Avatar Image
+            if (req.files['avatar'] && req.files['avatar'][0]) {
+                const response = await imagekit.upload({
+                    file: req.files['avatar'][0].buffer,
+                    fileName: `avatar_${userId}_${Date.now()}`,
+                    folder: "campus_connect_avatars"
+                });
+                updateData.avatar = response.url;
+            }
+
+            // 2. Handle 3D Avatar GLB Model
+            if (req.files['avatar3D'] && req.files['avatar3D'][0]) {
+                const response = await imagekit.upload({
+                    file: req.files['avatar3D'][0].buffer,
+                    fileName: `avatar3D_${userId}_${Date.now()}.glb`, // .glb extension zaroori hai
+                    folder: "campus_connect_avatars"
+                });
+                updateData.avatar3D = response.url;
+            }
         }
 
         const updatedUser = await User.findByIdAndUpdate(
@@ -73,7 +87,8 @@ const getUserProfile = async (req, res) => {
         const user = await User.findById(req.user._id)
             .select('-password')
             .populate('connections', 'name handle avatar role dept batch skills') 
-            .populate('pendingRequests', 'name handle avatar role dept batch');
+            .populate('pendingRequests', 'name handle avatar role dept batch')
+            .populate('sentRequests', 'name handle avatar role dept batch');
 
         if (!user) {
             return res.status(404).json({ message: "User not found" });
@@ -124,9 +139,12 @@ const sendConnectionRequest = async (req, res) => {
         }
 
         const targetUser = await User.findById(targetUserId);
-        if (!targetUser) return res.status(404).json({ message: "User not found" });
+        const currentUser = await User.findById(currentUserId); 
 
-        // Basic checks
+        if (!targetUser || !currentUser) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
         if (targetUser.connections.includes(currentUserId)) {
             return res.status(400).json({ message: "Already connected" });
         }
@@ -134,9 +152,11 @@ const sendConnectionRequest = async (req, res) => {
             return res.status(400).json({ message: "Request already sent" });
         }
         
-        // 🔥 BIG TECH WAY: Use $addToSet (Ye kabhi duplicate nahi banne dega)
-        await User.findByIdAndUpdate(targetUserId, { $addToSet: { pendingRequests: currentUserId } });
-        await User.findByIdAndUpdate(currentUserId, { $addToSet: { sentRequests: targetUserId } });
+        targetUser.pendingRequests.push(currentUserId);
+        currentUser.sentRequests.push(targetUserId); 
+        
+        await targetUser.save();
+        await currentUser.save(); 
 
         res.status(200).json({ message: "Connection request sent!" });
     } catch (error) {
@@ -154,20 +174,26 @@ const acceptConnectionRequest = async (req, res) => {
         const currentUserId = req.user._id;
 
         const currentUser = await User.findById(currentUserId);
+        const requesterUser = await User.findById(requesterId);
+
         if (!currentUser.pendingRequests.includes(requesterId)) {
             return res.status(400).json({ message: "No pending request" });
         }
 
-        // 🔥 MAGIC HAPPENS HERE: Ek hi line mein request hatao aur connection banao ($pull aur $addToSet)
-        await User.findByIdAndUpdate(currentUserId, {
-            $pull: { pendingRequests: requesterId },
-            $addToSet: { connections: requesterId } // Kabhi duplicate nahi banayega!
-        });
+        currentUser.pendingRequests = currentUser.pendingRequests.filter(
+            (id) => id.toString() !== requesterId.toString()
+        );
 
-        await User.findByIdAndUpdate(requesterId, {
-            $pull: { sentRequests: currentUserId },
-            $addToSet: { connections: currentUserId }
-        });
+        currentUser.connections.push(requesterId);
+        await currentUser.save();
+
+        if(requesterUser) {
+            requesterUser.sentRequests = requesterUser.sentRequests.filter(
+                (id) => id.toString() !== currentUserId.toString()
+            );
+            requesterUser.connections.push(currentUserId);
+            await requesterUser.save(); 
+        }
 
         res.status(200).json({ message: "Request accepted!" });
     } catch (error) {
@@ -182,11 +208,26 @@ const acceptConnectionRequest = async (req, res) => {
 const rejectConnectionRequest = async (req, res) => {
     try {
         const requesterId = req.params.id; 
-        const currentUserId = req.user._id; 
+        const currentUserId = req.user._id;         
 
-        // 🔥 CLEANUP: Seedha database se $pull kardo, .filter() aur .save() ki zaroorat hi nahi
-        await User.findByIdAndUpdate(currentUserId, { $pull: { pendingRequests: requesterId } });
-        await User.findByIdAndUpdate(requesterId, { $pull: { sentRequests: currentUserId } });
+        const currentUser = await User.findById(currentUserId);
+        const requesterUser = await User.findById(requesterId); 
+
+        if (!currentUser.pendingRequests.includes(requesterId)) {
+            return res.status(400).json({ message: "No pending request" });
+        }                       
+
+        currentUser.pendingRequests = currentUser.pendingRequests.filter(
+            (id) => id.toString() !== requesterId.toString()
+        );  
+        await currentUser.save();
+        
+        if (requesterUser) {
+            requesterUser.sentRequests = requesterUser.sentRequests.filter(
+                (id) => id.toString() !== currentUserId.toString()
+            );
+            await requesterUser.save();
+        }
         
         res.status(200).json({ message: "Request rejected!" });
     } catch (error) {

@@ -19,12 +19,20 @@ const userSchema = new mongoose.Schema({
         required: false 
     },
     avatar: { 
-        type: String 
+        type: String,
+        default: '' // 👉 Good practice: Default empty string rakhein
+    },
+    // 👉 NAYA FIELD: 3D model link save karne ke liye!
+    avatar3D: { 
+        type: String, 
+        default: '' 
     },
     handle: { 
         type: String, 
         required: true, 
-        unique: true 
+        unique: true,
+        lowercase: true, // 👉 Good practice: Handle hamesha lowercase mein rakhein
+        trim: true       // 👉 Spaces hata dega
     },
     role: {
         type: String,
@@ -77,8 +85,11 @@ const userSchema = new mongoose.Schema({
     pendingRequests: [{ 
         type: mongoose.Schema.Types.ObjectId, 
         ref: 'User' 
-    }] ,
-    sentRequests: [{ type: mongoose.Schema.Types.ObjectId, ref: 'User' }]
+    }],
+    sentRequests: [{ 
+        type: mongoose.Schema.Types.ObjectId, 
+        ref: 'User' 
+    }]
 
 }, { timestamps: true });
 

@@ -2,15 +2,13 @@ const express = require('express');
 const router = express.Router();
 
 // 🛡️ Middlewares
-const { protect } = require('../middlewares/authMiddleware');   
-
-// 👉 Upload Middleware
-const upload = require('../middlewares/uploadMiddleware'); 
+const { protect } = require('../middlewares/authMiddleware'); // NOTE: Make sure path matches your structure
+const upload = require('../middlewares/uploadMiddleware');    // NOTE: Make sure path matches your structure
 
 // 🎮 Controllers
 const { 
     getUserProfile,
-    getOtherUserProfile, // 👉 ADDED: Naya controller import kiya
+    getOtherUserProfile, 
     updateProfile,
     sendConnectionRequest, 
     acceptConnectionRequest, 
@@ -24,11 +22,14 @@ const {
 // Get current logged-in user's profile
 router.get('/profile', protect, getUserProfile);
 
-// 👉 ADDED: Get OTHER user's profile by their ID (Ye naya route add kiya hai)
+// Get OTHER user's profile by their ID 
 router.get('/:id', protect, getOtherUserProfile);
 
-// Update route par upload.single('avatar') laga diya hai
-router.put('/update', protect, upload.single('avatar'), updateProfile); 
+// 👉 THE FIX: Update route par ab dono (image aur 3D model) accept honge
+router.put('/update', protect, upload.fields([
+    { name: 'avatar', maxCount: 1 },
+    { name: 'avatar3D', maxCount: 1 }
+]), updateProfile); 
 
 // ==========================================
 // 🤝 CONNECTION ROUTES
