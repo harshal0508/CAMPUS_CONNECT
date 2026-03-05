@@ -2,8 +2,8 @@ const express = require('express');
 const router = express.Router();
 
 // 🛡️ Middlewares
-const { protect } = require('../middlewares/authMiddleware'); // NOTE: Make sure path matches your structure
-const upload = require('../middlewares/uploadMiddleware');    // NOTE: Make sure path matches your structure
+const { protect } = require('../middlewares/authMiddleware'); 
+const upload = require('../middlewares/uploadMiddleware');    
 
 // 🎮 Controllers
 const { 
