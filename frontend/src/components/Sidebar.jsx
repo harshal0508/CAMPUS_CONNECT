@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react'; 
-import { Home, Bell, User, LogOut, Sparkles, Radio, AudioLines } from 'lucide-react'; // 👉 AudioLines add kiya
+import { Home, Bell, User, LogOut, Sparkles, Radio, AudioLines, Rocket } from 'lucide-react'; 
 import { useNavigate, useLocation, useInRouterContext } from 'react-router-dom';
 import { createPortal } from 'react-dom'; 
 
@@ -23,14 +23,16 @@ function SidebarView({ user, onLogout, navigate, location }) {
 
   return (
     <>
-      <aside className="w-[80px] xl:w-[280px] sticky top-0 z-[50] h-screen flex flex-col justify-between py-4 px-2 xl:px-4 border-r border-gray-200 dark:border-white/5 bg-white/90 dark:bg-[#050505]/95 backdrop-blur-2xl select-none transition-colors duration-500">
+      {/* 👉 FIX 1: Added 'hidden md:flex' so it hides on mobile devices */}
+      <aside className="hidden md:flex w-[80px] xl:w-[280px] sticky top-0 z-[50] h-screen flex-col justify-between py-4 px-2 xl:px-4 border-r border-gray-200 dark:border-white/5 bg-white/90 dark:bg-[#050505]/95 backdrop-blur-2xl select-none transition-colors duration-500">
         
-        <div className="flex flex-col items-center xl:items-start w-full">
+        {/* 👉 FIX 2: Added overflow-hidden to parent, and overflow-y-auto to nav */}
+        <div className="flex flex-col items-center xl:items-start w-full h-full overflow-hidden">
           
           {/* Animated Logo Section */}
           <div 
             onClick={() => navigate('/feed')} 
-            className="relative p-1 mb-6 xl:ml-2 rounded-full cursor-pointer group transition-all duration-300 active:scale-90"
+            className="relative p-1 mb-6 xl:ml-2 rounded-full cursor-pointer group transition-all duration-300 active:scale-90 flex-shrink-0"
           >
             <div className="absolute inset-0 bg-gradient-to-tr from-blue-500 to-purple-500 rounded-full blur-md opacity-40 group-hover:opacity-80 transition-opacity duration-300"></div>
             <div className="relative bg-white dark:bg-black p-2 rounded-full border border-gray-200 dark:border-white/10 transition-colors duration-500">
@@ -38,8 +40,8 @@ function SidebarView({ user, onLogout, navigate, location }) {
             </div>
           </div>
 
-          {/* 🌈 Navigation Links */}
-          <nav className="space-y-3 w-full font-bold">
+          {/* 🌈 Navigation Links - Made Scrollable for safety */}
+          <nav className="space-y-3 w-full font-bold overflow-y-auto scrollbar-hide flex-1 pb-4">
             <NavItem 
               icon={<Home size={24} />} 
               label="Feed" 
@@ -47,7 +49,7 @@ function SidebarView({ user, onLogout, navigate, location }) {
               onClick={() => navigate('/feed')} 
             />
 
-            {/* 👉 IMPROVED UI: Campus Voice (Voice Rooms) Button */}
+            {/* 👉 Campus Voice Button */}
             <div 
               onClick={() => navigate('/rooms')} 
               className={`flex items-center gap-4 p-3.5 rounded-2xl cursor-pointer transition-all duration-300 w-full active:scale-95 group relative overflow-hidden
@@ -55,7 +57,6 @@ function SidebarView({ user, onLogout, navigate, location }) {
                   ? 'bg-gradient-to-r from-green-500 to-emerald-600 shadow-[0_0_20px_rgba(16,185,129,0.3)] text-white' 
                   : 'text-gray-500 dark:text-gray-400 hover:bg-green-50 dark:hover:bg-green-500/10 hover:text-green-600 dark:hover:text-green-400 hover:translate-x-1 border border-transparent hover:border-green-200 dark:hover:border-green-500/20'}`}
             >
-              {/* Subtle background pulse animation for unselected state */}
               {location.pathname !== '/rooms' && (
                  <div className="absolute inset-0 bg-gradient-to-r from-green-400/0 via-green-400/5 to-green-400/0 translate-x-[-100%] group-hover:animate-[shimmer_1.5s_infinite]"></div>
               )}
@@ -64,19 +65,9 @@ function SidebarView({ user, onLogout, navigate, location }) {
                 <div className={`relative z-10 ${location.pathname === '/rooms' ? 'scale-110' : 'group-hover:scale-110 transition-transform duration-300'}`}>
                   {location.pathname === '/rooms' ? <AudioLines size={24} className="animate-pulse" /> : <Radio size={24} />}
                 </div>
-                {/* Live indicator dot */}
                 <div className={`absolute top-0 right-0 w-2 h-2 rounded-full ${location.pathname === '/rooms' ? 'bg-white' : 'bg-green-500'} animate-ping`}></div>
               </div>
               <span className="hidden xl:inline text-[17px] tracking-wide relative z-10">Campus Voice</span>
-              
-              {/* Extra visual element for active state */}
-              {location.pathname === '/rooms' && (
-                <div className="hidden xl:flex ml-auto items-center gap-1 opacity-80">
-                  <div className="w-1 h-3 bg-white rounded-full animate-[bounce_1s_infinite_100ms]"></div>
-                  <div className="w-1 h-4 bg-white rounded-full animate-[bounce_1s_infinite_200ms]"></div>
-                  <div className="w-1 h-2 bg-white rounded-full animate-[bounce_1s_infinite_300ms]"></div>
-                </div>
-              )}
             </div>
 
             <div 
@@ -99,6 +90,23 @@ function SidebarView({ user, onLogout, navigate, location }) {
               <span className="hidden xl:inline text-[17px] tracking-wide">Notifications</span>
             </div>
 
+            {/* 👉 Launchpad Button */}
+            <div 
+              onClick={() => navigate('/launchpad')} 
+              className={`flex items-center gap-4 p-3.5 rounded-2xl cursor-pointer transition-all duration-300 w-full active:scale-95 group relative
+                ${location.pathname === '/launchpad' 
+                  ? 'bg-gradient-to-r from-orange-500 to-red-600 shadow-[0_0_20px_rgba(249,115,22,0.3)] text-white' 
+                  : 'text-gray-500 dark:text-gray-400 hover:bg-orange-50 dark:hover:bg-orange-500/10 hover:text-orange-600 dark:hover:text-orange-400 hover:translate-x-1 border border-transparent hover:border-orange-200 dark:hover:border-orange-500/20'}`}
+            >
+              <div className="relative flex justify-center xl:justify-start">
+                <div className={`${location.pathname === '/launchpad' ? 'scale-110' : 'group-hover:scale-110 transition-transform duration-300'}`}>
+                  <Rocket size={24} />
+                </div>
+              </div>
+              <span className="hidden xl:inline text-[17px] tracking-wide">Launchpad</span>
+              {location.pathname === '/launchpad' && <Sparkles size={20} className="hidden xl:block ml-auto text-orange-200 animate-pulse" />}
+            </div>
+
             <NavItem 
               icon={<User size={24} />} 
               label="Profile" 
@@ -111,7 +119,7 @@ function SidebarView({ user, onLogout, navigate, location }) {
         {/* 👤 User Section & Logout Trigger */}
         <div 
           onClick={() => setShowLogoutModal(true)} 
-          className="mt-4 flex items-center gap-3 p-2 xl:p-3 hover:bg-gray-100 dark:hover:bg-white/[0.04] rounded-[2rem] cursor-pointer group transition-all duration-300 active:scale-95 border border-transparent hover:border-gray-200 dark:hover:border-white/5"
+          className="mt-2 flex items-center gap-3 p-2 xl:p-3 hover:bg-gray-100 dark:hover:bg-white/[0.04] rounded-[2rem] cursor-pointer group transition-all duration-300 active:scale-95 border border-transparent hover:border-gray-200 dark:hover:border-white/5 flex-shrink-0"
         >
           <div className="relative p-[2px] bg-gradient-to-tr from-pink-500 via-purple-500 to-blue-500 rounded-full flex-shrink-0">
             <img 

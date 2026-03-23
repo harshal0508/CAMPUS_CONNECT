@@ -1,0 +1,1 @@
+User.findByIdAndUpdate(req.user._id, { $inc: { vTokens: -amount } })

@@ -36,6 +36,7 @@ app.use('/api/users', require('./routes/userRoutes'));
 app.use('/api/posts', require('./routes/postRoutes'));
 // 👉 FIX: Chat history aur messages ke liye naya route
 app.use('/api/messages', require('./routes/messageRoutes')); 
+app.use('/api/launchpad', require('./routes/launchpadRoutes'));
 
 // ==================
 // Root Route

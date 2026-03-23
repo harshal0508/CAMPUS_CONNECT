@@ -2,7 +2,6 @@ import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react'
 
 import API from '../api/axios'; 
 
-
 import { 
   Camera, UserMinus, Settings2, Github, GraduationCap, 
   Sparkles, Heart, Zap, Award, Flame, MapPin, ArrowLeft, Box, UploadCloud,
@@ -29,13 +28,13 @@ export default function Profile() {
   const [selectedModel, setSelectedModel] = useState(null);
   const [modelName, setModelName] = useState('');
 
-  // Upload Progress States
+  // 👉 NEW: Upload Progress States
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
 
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState('skills'); 
-
+  
   const imageInputRef = useRef();
   const modelInputRef = useRef();
 
@@ -77,6 +76,7 @@ export default function Profile() {
     e.preventDefault();
     if (!isOwnProfile) return; 
 
+    // 👉 START UPLOAD
     setIsUploading(true);
     setUploadProgress(0);
 
@@ -89,6 +89,7 @@ export default function Profile() {
     try {
       const { data: updatedUser } = await API.put('/users/update', data, {
         headers: { 'Content-Type': 'multipart/form-data' },
+        // 👉 AXIOS UPLOAD PROGRESS EVENT
         onUploadProgress: (progressEvent) => {
           const percentCompleted = Math.round((progressEvent.loaded * 100) / progressEvent.total);
           setUploadProgress(percentCompleted);
@@ -105,6 +106,7 @@ export default function Profile() {
       localStorage.setItem('userInfo', JSON.stringify(storedData));
       window.dispatchEvent(new Event('profileUpdated'));
       
+      // Chota sa delay UX smooth karne ke liye
       setTimeout(() => {
         setIsUploading(false);
         setUploadProgress(0);
@@ -235,6 +237,7 @@ export default function Profile() {
                  <TextAreaField label="Interests (Comma Separated)" value={formData.interests} onChange={v => setFormData({...formData, interests: v})} placeholder="AI, Web3, Design..." />
               </div>
               
+              {/* 👉 NEW: Interactive Progress Bar Button */}
               <button 
                 type="submit" 
                 disabled={isUploading}
@@ -285,19 +288,26 @@ export default function Profile() {
                 <TabItem active={activeTab === 'skills'} label="Skills" onClick={() => setActiveTab('skills')} />
                 <TabItem active={activeTab === 'squad'} label="Connection" onClick={() => setActiveTab('squad')} />
                 <TabItem active={activeTab === 'about'} label="About" onClick={() => setActiveTab('about')} />
+                <TabItem active={activeTab === '3d'} label="3D Space" onClick={() => setActiveTab('3d')} />
               </div>
 
               <div className="min-h-[200px]">
                 
-                {/* 👉 SKILLS NOW ONLY SHOWS 3D SPACE */}
                 {activeTab === 'skills' && (
-                    <div className="w-full h-[500px] md:h-[600px] bg-[#030005] rounded-[2rem] border border-white/10 overflow-hidden relative shadow-2xl animate-in zoom-in-95 duration-500">
-                        <ThreeDViewer 
-                            modelUrl={user?.avatar3D} 
-                            skills={user?.skills} 
-                            username={user?.handle || 'user'}
-                        />
-                    </div>
+                  <div className="flex flex-wrap gap-3 animate-in zoom-in-95 duration-500">
+                    {user?.skills?.length > 0 ? (
+                      user.skills.map((s, i) => (
+                        <div key={i} className="px-5 py-3 bg-white dark:bg-white/[0.03] border border-gray-200 dark:border-white/10 rounded-2xl hover:border-[#1d9bf0] dark:hover:border-[#1d9bf0]/50 transition-all group flex items-center gap-3 shadow-sm dark:shadow-none text-gray-900 dark:text-white">
+                          <div className="w-2 h-2 bg-[#1d9bf0] rounded-full shadow-[0_0_8px_rgba(29,155,240,0.8)]" />
+                          <span className="font-bold text-md tracking-tight">{String(s)}</span>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="w-full text-center py-10 bg-gray-50 dark:bg-white/[0.02] rounded-3xl border border-dashed border-gray-300 dark:border-white/10 transition-colors duration-500">
+                        <p className="text-gray-500 font-medium mb-3">No skills added yet.</p>
+                      </div>
+                    )}
+                  </div>
                 )}
 
                 {activeTab === 'squad' && (
@@ -352,6 +362,17 @@ export default function Profile() {
                       </div>
                     </div>
                   </div>
+                )}
+
+                {/* 👉 EPIC 3D VIEWER TAB */}
+                {activeTab === '3d' && (
+                    <div className="w-full h-[500px] md:h-[600px] bg-[#030005] rounded-[2rem] border border-white/10 overflow-hidden relative shadow-2xl animate-in zoom-in-95 duration-500">
+                        <ThreeDViewer 
+                            modelUrl={user?.avatar3D} 
+                            skills={user?.skills} 
+                            username={user?.handle || 'user'}
+                        />
+                    </div>
                 )}
 
               </div>

@@ -10,7 +10,8 @@ import Profile from './pages/Profile';
 import Sidebar from './components/Sidebar';
 import RightSidebar from './components/RightSidebar'; 
 import { UserProvider } from './contexts/UserContext';
-import LiveChat from './components/LiveChats'; // 👉 CHANGE 1: LiveChat import kiya
+import LiveChat from './components/LiveChats'; 
+import Launchpad from './pages/Launchpad'; // 👉 CHANGE 1: Launchpad Import kiya!
 
 /**
  * ProtectedLayout: Wraps the main app pages. 
@@ -29,7 +30,7 @@ const ProtectedLayout = ({ children, user, onLogout, isDarkMode, toggleTheme }) 
         </div>
         
         {/* Main Content Area */}
-        <main className="w-full max-w-[600px] border-x border-gray-200 dark:border-white/10 min-h-screen transition-colors duration-500 relative z-10">
+        <main className="w-full max-w-[600px] border-x border-gray-200 dark:border-white/10 min-h-screen transition-colors duration-500 relative z-10 pb-[80px] md:pb-0">
           {children}
         </main>
         
@@ -40,7 +41,7 @@ const ProtectedLayout = ({ children, user, onLogout, isDarkMode, toggleTheme }) 
         
       </div>
 
-      {/* 👉 CHANGE 2: Live Chat yahan add kiya (Protected Layout mein hone se har page par dikhega) */}
+      {/* Live Chat yahan add kiya */}
       <LiveChat />
     </div>
   );
@@ -139,7 +140,6 @@ function App() {
   };
 
   return (
-    // 👉 CHANGE 3: UserProvider yahan add kiya (LiveChat ko context ki zarurat hoti hai)
     <UserProvider>
       <Router>
         <Routes>
@@ -150,6 +150,13 @@ function App() {
           <Route path="/feed" element={
             <ProtectedLayout user={currentUser} onLogout={handleLogout} isDarkMode={isDarkMode} toggleTheme={toggleTheme}>
               <Feed user={currentUser} />
+            </ProtectedLayout>
+          } />
+
+          {/* 👉 CHANGE 2: Launchpad Route yahan add kiya! */}
+          <Route path="/launchpad" element={
+            <ProtectedLayout user={currentUser} onLogout={handleLogout} isDarkMode={isDarkMode} toggleTheme={toggleTheme}>
+              <Launchpad user={currentUser} />
             </ProtectedLayout>
           } />
           
